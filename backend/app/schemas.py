@@ -29,3 +29,22 @@ class EntryPayload(BaseModel):
 class ActionPayload(BaseModel):
     action: str
     remark: str | None = None
+
+
+class MiningConvertPayload(BaseModel):
+    mining_result_id: int
+    fields: str | None = None
+
+
+class DraftFieldsPayload(BaseModel):
+    fields: str | None = None
+    rule_text: str | None = None
+    mining_result_id: int | None = None
+
+
+class ArchivePayload(BaseModel):
+    archive_no: str
+
+
+class KnowledgeExportPayload(BaseModel):
+    label_id: int

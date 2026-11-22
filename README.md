@@ -77,5 +77,30 @@ npm run dev
 - 列表接口统一返回 `{ items, total, page, size }`，动作接口统一返回 `{ ok, message }`。
 - 状态流转只允许在 `app/services` 里改，路由层不做业务判断。
 
+## 场景知识库：版本化导出与归档号分群关联
+
+业务场景标注在普通导出记录之外，提供可下载、可回查规则版本的场景知识库包：
+
+- **挖掘转标注**：`POST /api/scenario-label/mining-results/convert` 把挖掘结果转成
+  场景知识库标签草稿，规则文本、字段组合、来源挖掘结果编号三者一同绑定。
+- **草稿与发布分离**：`POST /api/scenario-label/{id}/draft` 只改草稿工作区；
+  `POST /api/scenario-label/{id}/publish` 把规则、字段、来源整体固化为不可变版本快照。
+  已发布版本永不回写，`GET /api/scenario-label/{id}/versions` 可回查整条版本链。
+- **知识库包导出**：`POST /api/scenario-label/knowledge-base/export` 只读取完整的
+  已生效版本并冻结为归档包（含规则、字段、来源），同时在数据导出管理登记一条
+  导出任务并留存归档号。草稿字段不会入包，任何导出都不会把新规则与旧字段拼在一起；
+  仅保存草稿时，旧发布版仍可正常导出。
+- **重下**：`GET /api/data-export/knowledge-base/{归档号}/download` 按归档号重下原文件，
+  旧归档内容不随新版本发布而改变；也可按导出任务重下
+  `GET /api/data-export/tasks/{任务id}/knowledge-base/download`。
+- **归档号分群关联**：`POST /api/scenario-label/knowledge-base/link` 接收归档号，
+  用文件内冻结的同版字段重新匹配当前聚类配置，返回此次关联到的分群。
+  归档号不存在或文件不完整时返回 `ok=false` 并说明不可关联原因。
+
+实现位于 `backend/app/services/knowledge_archive.py`（归档仓库与同版匹配）、
+`scenario_label.py`（版本链）、`data_export.py`（导出登记与重下），
+路由见 `backend/app/routers/knowledge.py`；验收用例见
+`backend/tests/test_knowledge_archive.py`。
+
 领域：数据工程
 子方向：数据分析与数据应用
